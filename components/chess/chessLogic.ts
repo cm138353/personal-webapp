@@ -30,6 +30,7 @@ export interface GameState {
   capturedByWhite: Piece[]
   capturedByBlack: Piece[]
   lastMove: { from: [number, number]; to: [number, number] } | null
+  moveHistory: string[]
 }
 
 // ─── Initial board ────────────────────────────────────────────────────────────
@@ -77,6 +78,7 @@ export function createInitialState(): GameState {
     capturedByWhite: [],
     capturedByBlack: [],
     lastMove: null,
+    moveHistory: [],
   }
 }
 
@@ -454,6 +456,13 @@ export function applyMove(
     capturedByWhite,
     capturedByBlack,
     lastMove: { from: [fromRow, fromCol], to: [toRow, toCol] },
+    moveHistory: [...state.moveHistory, generateNotation(
+      state.board, piece, fromRow, fromCol, toRow, toCol,
+      !!captured || !!enPassantCapture,
+      promotionPiece,
+      status === 'checkmate',
+      status === 'playing' && isInCheck(board, opponent),
+    )],
   }
 }
 
@@ -475,6 +484,7 @@ function hasAnyLegalMove(
     capturedByWhite: [],
     capturedByBlack: [],
     lastMove: null,
+    moveHistory: [],
   }
 
   for (let r = 0; r < 8; r++) {
@@ -487,4 +497,97 @@ function hasAnyLegalMove(
     }
   }
   return false
+}
+
+// ─── Move notation (Standard Algebraic Notation) ─────────────────────────────
+
+const PIECE_LETTER: Record<PieceType, string> = {
+  king: 'K',
+  queen: 'Q',
+  rook: 'R',
+  bishop: 'B',
+  knight: 'N',
+  pawn: '',
+}
+
+function colToFile(col: number): string {
+  return String.fromCharCode(97 + col) // a-h
+}
+
+function rowToRank(row: number): string {
+  return String(8 - row) // 1-8
+}
+
+function squareName(row: number, col: number): string {
+  return colToFile(col) + rowToRank(row)
+}
+
+function generateNotation(
+  boardBefore: Board,
+  piece: Piece,
+  fromRow: number,
+  fromCol: number,
+  toRow: number,
+  toCol: number,
+  isCapture: boolean,
+  promotionPiece: PieceType,
+  isCheckmate: boolean,
+  isCheck: boolean,
+): string {
+  // Castling
+  if (piece.type === 'king' && Math.abs(toCol - fromCol) === 2) {
+    const notation = toCol > fromCol ? 'O-O' : 'O-O-O'
+    if (isCheckmate) return notation + '#'
+    if (isCheck) return notation + '+'
+    return notation
+  }
+
+  let notation = ''
+
+  // Piece letter (pawns don't get one)
+  notation += PIECE_LETTER[piece.type]
+
+  // Disambiguation: if another piece of same type+color can also reach the target
+  if (piece.type !== 'pawn') {
+    const ambiguous: [number, number][] = []
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (r === fromRow && c === fromCol) continue
+        const other = boardBefore[r][c]
+        if (other && other.type === piece.type && other.color === piece.color) {
+          ambiguous.push([r, c])
+        }
+      }
+    }
+
+    if (ambiguous.length > 0) {
+      const needFile = ambiguous.some(([, c]) => c !== fromCol) || ambiguous.some(([r]) => r === fromRow)
+      const needRank = ambiguous.some(([r]) => r !== fromRow) || ambiguous.some(([, c]) => c === fromCol)
+      
+      if (needFile) notation += colToFile(fromCol)
+      if (needRank && ambiguous.some(([, c]) => c === fromCol)) notation += rowToRank(fromRow)
+    }
+  }
+
+  // Pawn captures include the file
+  if (piece.type === 'pawn' && isCapture) {
+    notation += colToFile(fromCol)
+  }
+
+  // Capture symbol
+  if (isCapture) notation += 'x'
+
+  // Destination square
+  notation += squareName(toRow, toCol)
+
+  // Promotion
+  if (piece.type === 'pawn' && (toRow === 0 || toRow === 7)) {
+    notation += '=' + PIECE_LETTER[promotionPiece]
+  }
+
+  // Check / checkmate
+  if (isCheckmate) notation += '#'
+  else if (isCheck) notation += '+'
+
+  return notation
 }

@@ -71,11 +71,17 @@ const PIECE_VALUE: Record<PieceType, number> = {
 
 const INITIAL_TIME = 10 * 60 // 10 minutes in seconds
 
-function useChessTimer(gameStatus: GameState['status'], turn: Color) {
+function useChessTimer(
+  gameStatus: GameState['status'],
+  turn: Color,
+  onTimeout: (loser: Color) => void
+) {
   const [whiteTime, setWhiteTime] = useState(INITIAL_TIME)
   const [blackTime, setBlackTime] = useState(INITIAL_TIME)
   const [timerActive, setTimerActive] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const onTimeoutRef = useRef(onTimeout)
+  onTimeoutRef.current = onTimeout
 
   const startTimer = useCallback(() => setTimerActive(true), [])
 
@@ -88,6 +94,7 @@ function useChessTimer(gameStatus: GameState['status'], turn: Color) {
   useEffect(() => {
     if (gameStatus !== 'playing') {
       setTimerActive(false)
+      if (intervalRef.current) clearInterval(intervalRef.current)
       return
     }
     if (!timerActive) return
@@ -95,12 +102,20 @@ function useChessTimer(gameStatus: GameState['status'], turn: Color) {
     intervalRef.current = setInterval(() => {
       if (turn === 'white') {
         setWhiteTime((t) => {
-          if (t <= 1) { clearInterval(intervalRef.current!); return 0 }
+          if (t <= 1) {
+            clearInterval(intervalRef.current!)
+            onTimeoutRef.current('white')
+            return 0
+          }
           return t - 1
         })
       } else {
         setBlackTime((t) => {
-          if (t <= 1) { clearInterval(intervalRef.current!); return 0 }
+          if (t <= 1) {
+            clearInterval(intervalRef.current!)
+            onTimeoutRef.current('black')
+            return 0
+          }
           return t - 1
         })
       }
@@ -202,20 +217,28 @@ export default function ChessGame() {
   const [dragFrom, setDragFrom] = useState<[number, number] | null>(null)
   const [dragOver, setDragOver] = useState<[number, number] | null>(null)
   const [resigned, setResigned] = useState<Color | null>(null)
+  const [timedOut, setTimedOut] = useState<Color | null>(null)
+
+  const handleTimeout = useCallback((loser: Color) => {
+    setTimedOut(loser)
+    setSelected(null)
+    setLegalMoves([])
+  }, [])
+
+  const effectiveStatus: GameState['status'] = (resigned || timedOut) ? 'checkmate' : gameState.status
+  const effectiveWinner: Color | null = resigned
+    ? (resigned === 'white' ? 'black' : 'white')
+    : timedOut
+    ? (timedOut === 'white' ? 'black' : 'white')
+    : gameState.winner
 
   const { whiteTime, blackTime, startTimer, resetTimers } = useChessTimer(
-    resigned ? 'checkmate' : gameState.status,
-    gameState.turn
+    effectiveStatus,
+    gameState.turn,
+    handleTimeout
   )
 
   const timerStarted = useRef(false)
-
-  const effectiveStatus = resigned
-    ? 'checkmate'
-    : gameState.status
-  const effectiveWinner: Color | null = resigned
-    ? (resigned === 'white' ? 'black' : 'white')
-    : gameState.winner
 
   function handleNewGame() {
     setGameState(createInitialState())
@@ -225,6 +248,7 @@ export default function ChessGame() {
     setDragFrom(null)
     setDragOver(null)
     setResigned(null)
+    setTimedOut(null)
     resetTimers()
     timerStarted.current = false
   }
@@ -396,7 +420,9 @@ export default function ChessGame() {
                   {effectiveStatus === 'draw' && 'Draw'}
                 </p>
                 <p className="text-zinc-400 text-sm mb-5">
-                  {effectiveStatus === 'checkmate' && resigned
+                  {effectiveStatus === 'checkmate' && timedOut
+                    ? `${capitalize(timedOut)} ran out of time`
+                    : effectiveStatus === 'checkmate' && resigned
                     ? `${capitalize(resigned)} resigned`
                     : effectiveStatus === 'checkmate'
                     ? 'Checkmate'
@@ -540,6 +566,28 @@ export default function ChessGame() {
         >
           Resign
         </button>
+
+        {/* Move History */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 max-h-64 overflow-y-auto">
+          <p className="text-zinc-400 font-medium text-xs mb-2">Move history</p>
+          {gameState.moveHistory.length === 0 ? (
+            <p className="text-zinc-600 text-xs">No moves yet</p>
+          ) : (
+            <div className="grid grid-cols-[auto_1fr_1fr] gap-x-2 gap-y-0.5 text-xs font-mono">
+              {Array.from({ length: Math.ceil(gameState.moveHistory.length / 2) }).map((_, i) => {
+                const whiteMove = gameState.moveHistory[i * 2]
+                const blackMove = gameState.moveHistory[i * 2 + 1]
+                return (
+                  <div key={i} className="contents">
+                    <span className="text-zinc-600">{i + 1}.</span>
+                    <span className="text-white">{whiteMove}</span>
+                    <span className="text-zinc-300">{blackMove ?? ''}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Legend */}
         <div className="mt-2 bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-500 space-y-1">
