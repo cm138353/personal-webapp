@@ -11,6 +11,7 @@ import {
   type PieceType,
   type Piece,
 } from './chessLogic'
+import { saveCompletedGame } from '@/services/chessService'
 
 // ─── Piece image map ──────────────────────────────────────────────────────────
 // Uses the Wikimedia/Colin M.L. Burnett SVG set (public domain), stored in /public/chess/
@@ -239,6 +240,21 @@ export default function ChessGame() {
   )
 
   const timerStarted = useRef(false)
+  const gameStartTime = useRef<Date | null>(null)
+
+  // ─── Persist game when it ends ──────────────────────────────────────────────
+  useEffect(() => {
+    if (effectiveStatus !== 'playing' && gameState.moveHistory.length > 0) {
+      saveCompletedGame(
+        effectiveWinner,
+        gameState.moveHistory,
+        gameStartTime.current ?? new Date(),
+        new Date()
+      ).catch((err) => {
+        console.error('Failed to save game:', err)
+      })
+    }
+  }, [effectiveStatus])
 
   function handleNewGame() {
     setGameState(createInitialState())
@@ -251,6 +267,7 @@ export default function ChessGame() {
     setTimedOut(null)
     resetTimers()
     timerStarted.current = false
+    gameStartTime.current = null
   }
 
   function handleResign() {
@@ -282,6 +299,7 @@ export default function ChessGame() {
   function commitMove(fromRow: number, fromCol: number, toRow: number, toCol: number, promotion: PieceType) {
     if (!timerStarted.current) {
       timerStarted.current = true
+      gameStartTime.current = new Date()
       startTimer()
     }
     const newState = applyMove(gameState, fromRow, fromCol, toRow, toCol, promotion)
