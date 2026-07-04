@@ -11,7 +11,7 @@ import {
   type PieceType,
   type Piece,
 } from './chessLogic'
-import { saveCompletedGame } from '@/services/chessService'
+import { createGame as createServerGame, makeMove as sendMoveToServer, resignGame as resignServerGame, GameMode } from '@/services/chessService'
 
 // ─── Piece image map ──────────────────────────────────────────────────────────
 // Uses the Wikimedia/Colin M.L. Burnett SVG set (public domain), stored in /public/chess/
@@ -145,9 +145,17 @@ function CapturedPieces({ pieces, label }: { pieces: Piece[]; label: string }) {
       <span className="text-zinc-500 text-xs w-12 shrink-0">{label}</span>
       <div className="flex flex-wrap gap-0.5">
         {sorted.map((p, i) => (
-          <span key={i} className="text-lg leading-none select-none" title={p.type}>
-            {PIECE_UNICODE[p.color][p.type]}
-          </span>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={PIECE_IMG[p.color][p.type]}
+            alt={`${p.color} ${p.type}`}
+            width={22}
+            height={22}
+            className={`w-5 h-5 object-contain ${p.color === 'black' ? 'drop-shadow-[0_0_1px_rgba(255,255,255,0.9)]' : ''}`}
+            style={p.color === 'black' ? { filter: 'drop-shadow(0 0 1px white) drop-shadow(0 0 1px white)' } : undefined}
+            draggable={false}
+          />
         ))}
       </div>
     </div>
@@ -219,6 +227,8 @@ export default function ChessGame() {
   const [dragOver, setDragOver] = useState<[number, number] | null>(null)
   const [resigned, setResigned] = useState<Color | null>(null)
   const [timedOut, setTimedOut] = useState<Color | null>(null)
+  const [gameMode, setGameMode] = useState<GameMode>(GameMode.Practice)
+  const [waitingForServer, setWaitingForServer] = useState(false)
 
   const handleTimeout = useCallback((loser: Color) => {
     setTimedOut(loser)
@@ -241,20 +251,10 @@ export default function ChessGame() {
 
   const timerStarted = useRef(false)
   const gameStartTime = useRef<Date | null>(null)
+  const serverGameId = useRef<string | null>(null)
 
   // ─── Persist game when it ends ──────────────────────────────────────────────
-  useEffect(() => {
-    if (effectiveStatus !== 'playing' && gameState.moveHistory.length > 0) {
-      saveCompletedGame(
-        effectiveWinner,
-        gameState.moveHistory,
-        gameStartTime.current ?? new Date(),
-        new Date()
-      ).catch((err) => {
-        console.error('Failed to save game:', err)
-      })
-    }
-  }, [effectiveStatus])
+  // (No longer needed — moves are persisted individually)
 
   function handleNewGame() {
     setGameState(createInitialState())
@@ -265,9 +265,11 @@ export default function ChessGame() {
     setDragOver(null)
     setResigned(null)
     setTimedOut(null)
+    setWaitingForServer(false)
     resetTimers()
     timerStarted.current = false
     gameStartTime.current = null
+    serverGameId.current = null
   }
 
   function handleResign() {
@@ -275,6 +277,12 @@ export default function ChessGame() {
     setResigned(gameState.turn)
     setSelected(null)
     setLegalMoves([])
+
+    if (serverGameId.current) {
+      resignServerGame(serverGameId.current).catch((err) => {
+        console.warn('Failed to resign on server:', err)
+      })
+    }
   }
 
   function tryMove(fromRow: number, fromCol: number, toRow: number, toCol: number) {
@@ -302,15 +310,64 @@ export default function ChessGame() {
       gameStartTime.current = new Date()
       startTimer()
     }
+
+    // Convert to UCI
+    const uci = toUci(fromRow, fromCol, toRow, toCol, promotion)
+
+    // Apply our move immediately for instant feedback
     const newState = applyMove(gameState, fromRow, fromCol, toRow, toCol, promotion)
     setGameState(newState)
     setSelected(null)
     setLegalMoves([])
     setPendingPromotion(null)
+
+    // If no server game yet (first move), create one then send the move
+    if (!serverGameId.current) {
+      setWaitingForServer(true)
+      createServerGame(gameMode)
+        .then((gameId) => {
+          serverGameId.current = gameId
+          console.log('Server game created on first move, id:', gameId, 'mode:', gameMode)
+          return sendMoveToServer(gameId!, uci)
+        })
+        .then((response) => {
+          if (gameMode === GameMode.VsComputer && response.computerMoveUci) {
+            const compMove = parseUci(response.computerMoveUci)
+            if (compMove) {
+              setGameState((prev) => applyMove(prev, compMove.fromRow, compMove.fromCol, compMove.toRow, compMove.toCol, compMove.promotion))
+            }
+          }
+          setWaitingForServer(false)
+        })
+        .catch((err) => {
+          console.error('Failed to create game or send move:', err)
+          setWaitingForServer(false)
+        })
+    } else {
+      // Server game exists — just send the move
+      setWaitingForServer(true)
+      sendMoveToServer(serverGameId.current, uci)
+        .then((response) => {
+          if (gameMode === GameMode.VsComputer && response.computerMoveUci) {
+            const compMove = parseUci(response.computerMoveUci)
+            if (compMove) {
+              setGameState((prev) => applyMove(prev, compMove.fromRow, compMove.fromCol, compMove.toRow, compMove.toCol, compMove.promotion))
+            }
+          }
+          setWaitingForServer(false)
+        })
+        .catch((err) => {
+          console.error('Move rejected by server:', err)
+          // Rollback: revert to state before our move
+          setGameState(gameState)
+          setWaitingForServer(false)
+        })
+    }
   }
 
   function handleSquareClick(row: number, col: number) {
     if (effectiveStatus !== 'playing') return
+    if (waitingForServer) return
 
     const piece = gameState.board[row][col]
 
@@ -358,7 +415,7 @@ export default function ChessGame() {
 
   function handleDragStart(row: number, col: number, e: React.DragEvent) {
     const piece = gameState.board[row][col]
-    if (!piece || piece.color !== gameState.turn || effectiveStatus !== 'playing') {
+    if (!piece || piece.color !== gameState.turn || effectiveStatus !== 'playing' || waitingForServer) {
       e.preventDefault()
       return
     }
@@ -405,9 +462,9 @@ export default function ChessGame() {
           <TimerDisplay time={blackTime} active={gameState.turn === 'black' && effectiveStatus === 'playing'} label="Black" />
         </div>
 
-        {/* Captured pieces by white (black pieces white captured) */}
+        {/* Black's captured pieces (white pieces that black took) — shown on black's side */}
         <div className="w-full max-w-[512px]">
-          <CapturedPieces pieces={gameState.capturedByWhite} label="White +" />
+          <CapturedPieces pieces={gameState.capturedByBlack} label="Black" />
         </div>
 
         {/* Board */}
@@ -540,9 +597,9 @@ export default function ChessGame() {
           </div>
         </div>
 
-        {/* Captured pieces by black (white pieces black captured) */}
+        {/* White's captured pieces (black pieces that white took) — shown on white's side */}
         <div className="w-full max-w-[512px]">
-          <CapturedPieces pieces={gameState.capturedByBlack} label="Black +" />
+          <CapturedPieces pieces={gameState.capturedByWhite} label="White" />
         </div>
 
         {/* White timer (bottom) */}
@@ -570,10 +627,38 @@ export default function ChessGame() {
           Move <span className="text-white font-semibold">{gameState.fullMoveNumber}</span>
         </div>
 
+        {/* Game mode selector */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+          <p className="text-xs text-zinc-500 mb-2">Game Mode</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setGameMode(GameMode.Practice)}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                gameMode === GameMode.Practice
+                  ? 'bg-white text-zinc-900'
+                  : 'bg-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              Practice
+            </button>
+            <button
+              onClick={() => setGameMode(GameMode.VsComputer)}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                gameMode === GameMode.VsComputer
+                  ? 'bg-white text-zinc-900'
+                  : 'bg-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              vs Computer
+            </button>
+          </div>
+        </div>
+
         {/* Buttons */}
         <button
           onClick={handleNewGame}
-          className="px-4 py-2.5 bg-white text-zinc-900 font-semibold rounded-lg hover:bg-zinc-100 transition-colors text-sm"
+          disabled={effectiveStatus === 'playing' && gameState.moveHistory.length > 0}
+          className="px-4 py-2.5 bg-white text-zinc-900 font-semibold rounded-lg hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
         >
           New Game
         </button>
@@ -643,4 +728,30 @@ function findKingPosition(board: GameState['board'], color: Color): [number, num
     }
   }
   return null
+}
+
+/** Convert board coordinates + promotion to UCI notation (e.g. "e2e4", "e7e8q") */
+function toUci(fromRow: number, fromCol: number, toRow: number, toCol: number, promotion: PieceType): string {
+  const from = colToFile(fromCol) + rowToRank(fromRow)
+  const to = colToFile(toCol) + rowToRank(toRow)
+  const promo = (fromRow === 6 && toRow === 7) || (fromRow === 1 && toRow === 0)
+    ? promotion === 'queen' ? 'q' : promotion === 'rook' ? 'r' : promotion === 'bishop' ? 'b' : 'n'
+    : ''
+  return from + to + promo
+}
+
+/** Parse a UCI string (e.g. "e2e4", "e7e8q") into board coordinates */
+function parseUci(uci: string): { fromRow: number; fromCol: number; toRow: number; toCol: number; promotion: PieceType } | null {
+  if (uci.length < 4) return null
+  const fromCol = uci.charCodeAt(0) - 97
+  const fromRow = 8 - parseInt(uci[1], 10)
+  const toCol = uci.charCodeAt(2) - 97
+  const toRow = 8 - parseInt(uci[3], 10)
+  let promotion: PieceType = 'queen'
+  if (uci.length === 5) {
+    const p = uci[4]
+    promotion = p === 'r' ? 'rook' : p === 'b' ? 'bishop' : p === 'n' ? 'knight' : 'queen'
+  }
+  if (fromCol < 0 || fromCol > 7 || toCol < 0 || toCol > 7 || fromRow < 0 || fromRow > 7 || toRow < 0 || toRow > 7) return null
+  return { fromRow, fromCol, toRow, toCol, promotion }
 }
