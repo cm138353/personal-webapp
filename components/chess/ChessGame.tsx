@@ -230,6 +230,27 @@ export default function ChessGame() {
   const [gameMode, setGameMode] = useState<GameMode>(GameMode.Practice)
   const [waitingForServer, setWaitingForServer] = useState(false)
 
+  // Move history navigation
+  const [boardHistory, setBoardHistory] = useState<GameState[]>([createInitialState()])
+  const [viewingIndex, setViewingIndex] = useState<number | null>(null) // null = viewing current/live
+  const isViewingHistory = viewingIndex !== null
+  const displayedState = isViewingHistory ? boardHistory[viewingIndex] : gameState
+  const lastGameStateRef = useRef(gameState)
+
+  // Track board history: whenever gameState changes (and it's a new state), push it
+  useEffect(() => {
+    if (gameState !== lastGameStateRef.current) {
+      lastGameStateRef.current = gameState
+      setBoardHistory((prev) => {
+        // Avoid duplicate pushes: only push if the board is different from the last entry
+        const last = prev[prev.length - 1]
+        if (last === gameState) return prev
+        return [...prev, gameState]
+      })
+      setViewingIndex(null)
+    }
+  }, [gameState])
+
   const handleTimeout = useCallback((loser: Color) => {
     setTimedOut(loser)
     setSelected(null)
@@ -253,11 +274,46 @@ export default function ChessGame() {
   const gameStartTime = useRef<Date | null>(null)
   const serverGameId = useRef<string | null>(null)
 
+  // History navigation
+  function goToMove(index: number) {
+    if (index < 0 || index >= boardHistory.length) return
+    setViewingIndex(index)
+    setSelected(null)
+    setLegalMoves([])
+  }
+
+  function goBack() {
+    if (viewingIndex === null) {
+      goToMove(boardHistory.length - 2)
+    } else if (viewingIndex > 0) {
+      goToMove(viewingIndex - 1)
+    }
+  }
+
+  function goForward() {
+    if (viewingIndex === null) return
+    if (viewingIndex >= boardHistory.length - 2) {
+      setViewingIndex(null)
+    } else {
+      goToMove(viewingIndex + 1)
+    }
+  }
+
+  function goToLive() {
+    setViewingIndex(null)
+    setSelected(null)
+    setLegalMoves([])
+  }
+
   // ─── Persist game when it ends ──────────────────────────────────────────────
   // (No longer needed — moves are persisted individually)
 
   function handleNewGame() {
-    setGameState(createInitialState())
+    const initial = createInitialState()
+    setGameState(initial)
+    setBoardHistory([initial])
+    setViewingIndex(null)
+    lastGameStateRef.current = initial
     setSelected(null)
     setLegalMoves([])
     setPendingPromotion(null)
@@ -368,6 +424,7 @@ export default function ChessGame() {
   function handleSquareClick(row: number, col: number) {
     if (effectiveStatus !== 'playing') return
     if (waitingForServer) return
+    if (isViewingHistory) return
 
     const piece = gameState.board[row][col]
 
@@ -415,7 +472,7 @@ export default function ChessGame() {
 
   function handleDragStart(row: number, col: number, e: React.DragEvent) {
     const piece = gameState.board[row][col]
-    if (!piece || piece.color !== gameState.turn || effectiveStatus !== 'playing' || waitingForServer) {
+    if (!piece || piece.color !== gameState.turn || effectiveStatus !== 'playing' || waitingForServer || isViewingHistory) {
       e.preventDefault()
       return
     }
@@ -528,13 +585,13 @@ export default function ChessGame() {
                 height: '100%',
               }}
             >
-            {gameState.board.map((rowArr, row) =>
+            {displayedState.board.map((rowArr, row) =>
               rowArr.map((piece, col) => {
                 const isLight = (row + col) % 2 === 0
                 const isSelected = selected ? selected[0] === row && selected[1] === col : false
                 const isLegalTarget = legalSet.has(`${row},${col}`)
-                const isLastMoveFrom = gameState.lastMove?.from[0] === row && gameState.lastMove?.from[1] === col
-                const isLastMoveTo = gameState.lastMove?.to[0] === row && gameState.lastMove?.to[1] === col
+                const isLastMoveFrom = displayedState.lastMove?.from[0] === row && displayedState.lastMove?.from[1] === col
+                const isLastMoveTo = displayedState.lastMove?.to[0] === row && displayedState.lastMove?.to[1] === col
                 const isCheckedKing = checkedKingPos ? checkedKingPos[0] === row && checkedKingPos[1] === col : false
                 const isDragTarget = dragOver ? dragOver[0] === row && dragOver[1] === col : false
                 const isDragSource = dragFrom ? dragFrom[0] === row && dragFrom[1] === col : false
@@ -692,6 +749,41 @@ export default function ChessGame() {
           )}
         </div>
 
+        {/* Move navigation */}
+        {gameState.moveHistory.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goBack}
+              disabled={viewingIndex === 0}
+              className="flex-1 px-2 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+              title="Previous move"
+            >
+              ◀
+            </button>
+            <button
+              onClick={goForward}
+              disabled={viewingIndex === null}
+              className="flex-1 px-2 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+              title="Next move"
+            >
+              ▶
+            </button>
+            <button
+              onClick={goToLive}
+              disabled={viewingIndex === null}
+              className="flex-1 px-2 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+              title="Current position"
+            >
+              ⏭
+            </button>
+          </div>
+        )}
+        {isViewingHistory && (
+          <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg px-3 py-1.5 text-yellow-300 text-xs text-center">
+            Viewing move {viewingIndex} of {boardHistory.length - 1}
+          </div>
+        )}
+
         {/* Legend */}
         <div className="mt-2 bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-500 space-y-1">
           <p className="text-zinc-400 font-medium mb-2 text-xs">How to play</p>
@@ -755,3 +847,6 @@ function parseUci(uci: string): { fromRow: number; fromCol: number; toRow: numbe
   if (fromCol < 0 || fromCol > 7 || toCol < 0 || toCol > 7 || fromRow < 0 || fromRow > 7 || toRow < 0 || toRow > 7) return null
   return { fromRow, fromCol, toRow, toCol, promotion }
 }
+
+
+
