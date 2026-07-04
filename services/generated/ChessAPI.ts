@@ -1027,566 +1027,31 @@ export class AccountClient implements IAccountClient {
     }
 }
 
-export interface IBookClient {
-    /**
-     * @return OK
-     */
-    bookGET(id: string, signal?: AbortSignal): Promise<BookDto>;
-    /**
-     * @param body (optional) 
-     * @return OK
-     */
-    bookPUT(id: string, body: CreateUpdateBookDto | undefined, signal?: AbortSignal): Promise<BookDto>;
-    /**
-     * @return OK
-     */
-    bookDELETE(id: string, signal?: AbortSignal): Promise<void>;
-    /**
-     * @param sorting (optional) 
-     * @param skipCount (optional) 
-     * @param maxResultCount (optional) 
-     * @return OK
-     */
-    bookGET2(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, signal?: AbortSignal): Promise<PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null>;
-    /**
-     * @param body (optional) 
-     * @return OK
-     */
-    bookPOST(body: CreateUpdateBookDto | undefined, signal?: AbortSignal): Promise<BookDto>;
-}
-
-export class BookClient implements IBookClient {
-    protected instance: AxiosInstance;
-    protected baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, instance?: AxiosInstance) {
-
-        this.instance = instance || axios.create();
-
-        this.baseUrl = baseUrl ?? "";
-
-    }
-
-    /**
-     * @return OK
-     */
-    bookGET(id: string, signal?: AbortSignal): Promise<BookDto> {
-        let url_ = this.baseUrl + "/api/app/book/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: AxiosRequestConfig = {
-            method: "GET",
-            url: url_,
-            headers: {
-                "Accept": "application/json"
-            },
-            signal
-        };
-
-        return this.instance.request(options_).catch((_error: any) => {
-            if (isAxiosError(_error) && _error.response) {
-                return _error.response;
-            } else {
-                throw _error;
-            }
-        }).then((_response: AxiosResponse) => {
-            return this.processBookGET(_response);
-        });
-    }
-
-    protected processBookGET(response: AxiosResponse): Promise<BookDto> {
-        const status = response.status;
-        let _headers: any = {};
-        if (response.headers && typeof response.headers === "object") {
-            for (const k in response.headers) {
-                if (response.headers.hasOwnProperty(k)) {
-                    _headers[k] = response.headers[k];
-                }
-            }
-        }
-        if (status === 200) {
-            const _responseText = response.data;
-            let result200: any = null;
-            let resultData200  = _responseText;
-            result200 = BookDto.fromJS(resultData200);
-            return Promise.resolve<BookDto>(result200);
-
-        } else if (status === 400) {
-            const _responseText = response.data;
-            let result400: any = null;
-            let resultData400  = _responseText;
-            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-
-        } else if (status === 401) {
-            const _responseText = response.data;
-            let result401: any = null;
-            let resultData401  = _responseText;
-            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
-            return throwException("Unauthorized", status, _responseText, _headers, result401);
-
-        } else if (status === 403) {
-            const _responseText = response.data;
-            let result403: any = null;
-            let resultData403  = _responseText;
-            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
-            return throwException("Forbidden", status, _responseText, _headers, result403);
-
-        } else if (status === 404) {
-            const _responseText = response.data;
-            let result404: any = null;
-            let resultData404  = _responseText;
-            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
-            return throwException("Not Found", status, _responseText, _headers, result404);
-
-        } else if (status === 500) {
-            const _responseText = response.data;
-            let result500: any = null;
-            let resultData500  = _responseText;
-            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
-            return throwException("Internal Server Error", status, _responseText, _headers, result500);
-
-        } else if (status === 501) {
-            const _responseText = response.data;
-            let result501: any = null;
-            let resultData501  = _responseText;
-            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
-            return throwException("Not Implemented", status, _responseText, _headers, result501);
-
-        } else if (status !== 200 && status !== 204) {
-            const _responseText = response.data;
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-        }
-        return Promise.resolve<BookDto>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return OK
-     */
-    bookPUT(id: string, body: CreateUpdateBookDto | undefined, signal?: AbortSignal): Promise<BookDto> {
-        let url_ = this.baseUrl + "/api/app/book/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: AxiosRequestConfig = {
-            data: content_,
-            method: "PUT",
-            url: url_,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            signal
-        };
-
-        return this.instance.request(options_).catch((_error: any) => {
-            if (isAxiosError(_error) && _error.response) {
-                return _error.response;
-            } else {
-                throw _error;
-            }
-        }).then((_response: AxiosResponse) => {
-            return this.processBookPUT(_response);
-        });
-    }
-
-    protected processBookPUT(response: AxiosResponse): Promise<BookDto> {
-        const status = response.status;
-        let _headers: any = {};
-        if (response.headers && typeof response.headers === "object") {
-            for (const k in response.headers) {
-                if (response.headers.hasOwnProperty(k)) {
-                    _headers[k] = response.headers[k];
-                }
-            }
-        }
-        if (status === 200) {
-            const _responseText = response.data;
-            let result200: any = null;
-            let resultData200  = _responseText;
-            result200 = BookDto.fromJS(resultData200);
-            return Promise.resolve<BookDto>(result200);
-
-        } else if (status === 400) {
-            const _responseText = response.data;
-            let result400: any = null;
-            let resultData400  = _responseText;
-            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-
-        } else if (status === 401) {
-            const _responseText = response.data;
-            let result401: any = null;
-            let resultData401  = _responseText;
-            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
-            return throwException("Unauthorized", status, _responseText, _headers, result401);
-
-        } else if (status === 403) {
-            const _responseText = response.data;
-            let result403: any = null;
-            let resultData403  = _responseText;
-            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
-            return throwException("Forbidden", status, _responseText, _headers, result403);
-
-        } else if (status === 404) {
-            const _responseText = response.data;
-            let result404: any = null;
-            let resultData404  = _responseText;
-            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
-            return throwException("Not Found", status, _responseText, _headers, result404);
-
-        } else if (status === 500) {
-            const _responseText = response.data;
-            let result500: any = null;
-            let resultData500  = _responseText;
-            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
-            return throwException("Internal Server Error", status, _responseText, _headers, result500);
-
-        } else if (status === 501) {
-            const _responseText = response.data;
-            let result501: any = null;
-            let resultData501  = _responseText;
-            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
-            return throwException("Not Implemented", status, _responseText, _headers, result501);
-
-        } else if (status !== 200 && status !== 204) {
-            const _responseText = response.data;
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-        }
-        return Promise.resolve<BookDto>(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    bookDELETE(id: string, signal?: AbortSignal): Promise<void> {
-        let url_ = this.baseUrl + "/api/app/book/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: AxiosRequestConfig = {
-            method: "DELETE",
-            url: url_,
-            headers: {
-            },
-            signal
-        };
-
-        return this.instance.request(options_).catch((_error: any) => {
-            if (isAxiosError(_error) && _error.response) {
-                return _error.response;
-            } else {
-                throw _error;
-            }
-        }).then((_response: AxiosResponse) => {
-            return this.processBookDELETE(_response);
-        });
-    }
-
-    protected processBookDELETE(response: AxiosResponse): Promise<void> {
-        const status = response.status;
-        let _headers: any = {};
-        if (response.headers && typeof response.headers === "object") {
-            for (const k in response.headers) {
-                if (response.headers.hasOwnProperty(k)) {
-                    _headers[k] = response.headers[k];
-                }
-            }
-        }
-        if (status === 200) {
-            const _responseText = response.data;
-            return Promise.resolve<void>(null as any);
-
-        } else if (status === 204) {
-            const _responseText = response.data;
-            return Promise.resolve<void>(null as any);
-
-        } else if (status === 400) {
-            const _responseText = response.data;
-            let result400: any = null;
-            let resultData400  = _responseText;
-            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-
-        } else if (status === 401) {
-            const _responseText = response.data;
-            let result401: any = null;
-            let resultData401  = _responseText;
-            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
-            return throwException("Unauthorized", status, _responseText, _headers, result401);
-
-        } else if (status === 403) {
-            const _responseText = response.data;
-            let result403: any = null;
-            let resultData403  = _responseText;
-            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
-            return throwException("Forbidden", status, _responseText, _headers, result403);
-
-        } else if (status === 404) {
-            const _responseText = response.data;
-            let result404: any = null;
-            let resultData404  = _responseText;
-            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
-            return throwException("Not Found", status, _responseText, _headers, result404);
-
-        } else if (status === 500) {
-            const _responseText = response.data;
-            let result500: any = null;
-            let resultData500  = _responseText;
-            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
-            return throwException("Internal Server Error", status, _responseText, _headers, result500);
-
-        } else if (status === 501) {
-            const _responseText = response.data;
-            let result501: any = null;
-            let resultData501  = _responseText;
-            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
-            return throwException("Not Implemented", status, _responseText, _headers, result501);
-
-        } else if (status !== 200 && status !== 204) {
-            const _responseText = response.data;
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-        }
-        return Promise.resolve<void>(null as any);
-    }
-
-    /**
-     * @param sorting (optional) 
-     * @param skipCount (optional) 
-     * @param maxResultCount (optional) 
-     * @return OK
-     */
-    bookGET2(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, signal?: AbortSignal): Promise<PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null> {
-        let url_ = this.baseUrl + "/api/app/book?";
-        if (sorting === null)
-            throw new globalThis.Error("The parameter 'sorting' cannot be null.");
-        else if (sorting !== undefined)
-            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
-        if (skipCount === null)
-            throw new globalThis.Error("The parameter 'skipCount' cannot be null.");
-        else if (skipCount !== undefined)
-            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
-        if (maxResultCount === null)
-            throw new globalThis.Error("The parameter 'maxResultCount' cannot be null.");
-        else if (maxResultCount !== undefined)
-            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: AxiosRequestConfig = {
-            method: "GET",
-            url: url_,
-            headers: {
-                "Accept": "application/json"
-            },
-            signal
-        };
-
-        return this.instance.request(options_).catch((_error: any) => {
-            if (isAxiosError(_error) && _error.response) {
-                return _error.response;
-            } else {
-                throw _error;
-            }
-        }).then((_response: AxiosResponse) => {
-            return this.processBookGET2(_response);
-        });
-    }
-
-    protected processBookGET2(response: AxiosResponse): Promise<PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null> {
-        const status = response.status;
-        let _headers: any = {};
-        if (response.headers && typeof response.headers === "object") {
-            for (const k in response.headers) {
-                if (response.headers.hasOwnProperty(k)) {
-                    _headers[k] = response.headers[k];
-                }
-            }
-        }
-        if (status === 200) {
-            const _responseText = response.data;
-            let result200: any = null;
-            let resultData200  = _responseText;
-            result200 = PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null.fromJS(resultData200);
-            return Promise.resolve<PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null>(result200);
-
-        } else if (status === 400) {
-            const _responseText = response.data;
-            let result400: any = null;
-            let resultData400  = _responseText;
-            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-
-        } else if (status === 401) {
-            const _responseText = response.data;
-            let result401: any = null;
-            let resultData401  = _responseText;
-            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
-            return throwException("Unauthorized", status, _responseText, _headers, result401);
-
-        } else if (status === 403) {
-            const _responseText = response.data;
-            let result403: any = null;
-            let resultData403  = _responseText;
-            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
-            return throwException("Forbidden", status, _responseText, _headers, result403);
-
-        } else if (status === 404) {
-            const _responseText = response.data;
-            let result404: any = null;
-            let resultData404  = _responseText;
-            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
-            return throwException("Not Found", status, _responseText, _headers, result404);
-
-        } else if (status === 500) {
-            const _responseText = response.data;
-            let result500: any = null;
-            let resultData500  = _responseText;
-            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
-            return throwException("Internal Server Error", status, _responseText, _headers, result500);
-
-        } else if (status === 501) {
-            const _responseText = response.data;
-            let result501: any = null;
-            let resultData501  = _responseText;
-            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
-            return throwException("Not Implemented", status, _responseText, _headers, result501);
-
-        } else if (status !== 200 && status !== 204) {
-            const _responseText = response.data;
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-        }
-        return Promise.resolve<PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return OK
-     */
-    bookPOST(body: CreateUpdateBookDto | undefined, signal?: AbortSignal): Promise<BookDto> {
-        let url_ = this.baseUrl + "/api/app/book";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: AxiosRequestConfig = {
-            data: content_,
-            method: "POST",
-            url: url_,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            signal
-        };
-
-        return this.instance.request(options_).catch((_error: any) => {
-            if (isAxiosError(_error) && _error.response) {
-                return _error.response;
-            } else {
-                throw _error;
-            }
-        }).then((_response: AxiosResponse) => {
-            return this.processBookPOST(_response);
-        });
-    }
-
-    protected processBookPOST(response: AxiosResponse): Promise<BookDto> {
-        const status = response.status;
-        let _headers: any = {};
-        if (response.headers && typeof response.headers === "object") {
-            for (const k in response.headers) {
-                if (response.headers.hasOwnProperty(k)) {
-                    _headers[k] = response.headers[k];
-                }
-            }
-        }
-        if (status === 200) {
-            const _responseText = response.data;
-            let result200: any = null;
-            let resultData200  = _responseText;
-            result200 = BookDto.fromJS(resultData200);
-            return Promise.resolve<BookDto>(result200);
-
-        } else if (status === 400) {
-            const _responseText = response.data;
-            let result400: any = null;
-            let resultData400  = _responseText;
-            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-
-        } else if (status === 401) {
-            const _responseText = response.data;
-            let result401: any = null;
-            let resultData401  = _responseText;
-            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
-            return throwException("Unauthorized", status, _responseText, _headers, result401);
-
-        } else if (status === 403) {
-            const _responseText = response.data;
-            let result403: any = null;
-            let resultData403  = _responseText;
-            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
-            return throwException("Forbidden", status, _responseText, _headers, result403);
-
-        } else if (status === 404) {
-            const _responseText = response.data;
-            let result404: any = null;
-            let resultData404  = _responseText;
-            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
-            return throwException("Not Found", status, _responseText, _headers, result404);
-
-        } else if (status === 500) {
-            const _responseText = response.data;
-            let result500: any = null;
-            let resultData500  = _responseText;
-            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
-            return throwException("Internal Server Error", status, _responseText, _headers, result500);
-
-        } else if (status === 501) {
-            const _responseText = response.data;
-            let result501: any = null;
-            let resultData501  = _responseText;
-            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
-            return throwException("Not Implemented", status, _responseText, _headers, result501);
-
-        } else if (status !== 200 && status !== 204) {
-            const _responseText = response.data;
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-        }
-        return Promise.resolve<BookDto>(null as any);
-    }
-}
-
 export interface IChessClient {
     /**
      * @return OK
      */
     getGame(id: string, signal?: AbortSignal): Promise<GameStateDto>;
     /**
-     * @param id (optional) 
-     * @param winner (optional) 
-     * @param moveHistory (optional) 
-     * @param startTime (optional) 
-     * @param endTime (optional) 
+     * @param gameMode (optional) 
      * @return OK
      */
-    createGame(id: string | undefined, winner: Color | undefined, moveHistory: string[] | undefined, startTime: Date | undefined, endTime: Date | undefined, signal?: AbortSignal): Promise<GameStateDto>;
+    createGame(gameMode: GameMode | undefined, signal?: AbortSignal): Promise<GameStateDto>;
     /**
-     * @param body (optional) 
+     * @param gameId (optional) 
+     * @param moveUci (optional) 
      * @return OK
      */
-    chessPOST(body: GameStateDto | undefined, signal?: AbortSignal): Promise<GameStateDto>;
+    updateGame(gameId: string | undefined, moveUci: string | undefined, signal?: AbortSignal): Promise<GameStateDto>;
+    /**
+     * @return OK
+     */
+    resignGame(id: string, signal?: AbortSignal): Promise<GameStateDto>;
+    /**
+     * @param gameMode (optional) 
+     * @return OK
+     */
+    chessPOST(gameMode: GameMode | undefined, signal?: AbortSignal): Promise<GameStateDto>;
     /**
      * @param sorting (optional) 
      * @param skipCount (optional) 
@@ -1595,18 +1060,22 @@ export interface IChessClient {
      */
     chessGET(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, signal?: AbortSignal): Promise<PagedResultDto_1OfOfGameStateDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null>;
     /**
+     * @param body (optional) 
+     * @return OK
+     */
+    chessPUT(body: MakeMoveDto | undefined, signal?: AbortSignal): Promise<GameStateDto>;
+    /**
+     * @return OK
+     */
+    chessGET2(id: string, signal?: AbortSignal): Promise<GameStateDto>;
+    /**
      * @return OK
      */
     chessDELETE(id: string, signal?: AbortSignal): Promise<void>;
     /**
      * @return OK
      */
-    chessGET2(id: string, signal?: AbortSignal): Promise<GameStateDto>;
-    /**
-     * @param body (optional) 
-     * @return OK
-     */
-    chessPUT(id: string, body: GameStateDto | undefined, signal?: AbortSignal): Promise<GameStateDto>;
+    resign(id: string, signal?: AbortSignal): Promise<GameStateDto>;
 }
 
 export class ChessClient implements IChessClient {
@@ -1677,35 +1146,15 @@ export class ChessClient implements IChessClient {
     }
 
     /**
-     * @param id (optional) 
-     * @param winner (optional) 
-     * @param moveHistory (optional) 
-     * @param startTime (optional) 
-     * @param endTime (optional) 
+     * @param gameMode (optional) 
      * @return OK
      */
-    createGame(id: string | undefined, winner: Color | undefined, moveHistory: string[] | undefined, startTime: Date | undefined, endTime: Date | undefined, signal?: AbortSignal): Promise<GameStateDto> {
+    createGame(gameMode: GameMode | undefined, signal?: AbortSignal): Promise<GameStateDto> {
         let url_ = this.baseUrl + "/api/Chess/CreateGame?";
-        if (id === null)
-            throw new globalThis.Error("The parameter 'id' cannot be null.");
-        else if (id !== undefined)
-            url_ += "Id=" + encodeURIComponent("" + id) + "&";
-        if (winner === null)
-            throw new globalThis.Error("The parameter 'winner' cannot be null.");
-        else if (winner !== undefined)
-            url_ += "Winner=" + encodeURIComponent("" + winner) + "&";
-        if (moveHistory === null)
-            throw new globalThis.Error("The parameter 'moveHistory' cannot be null.");
-        else if (moveHistory !== undefined)
-            moveHistory && moveHistory.forEach(item => { url_ += "MoveHistory=" + encodeURIComponent("" + item) + "&"; });
-        if (startTime === null)
-            throw new globalThis.Error("The parameter 'startTime' cannot be null.");
-        else if (startTime !== undefined)
-            url_ += "StartTime=" + encodeURIComponent(startTime ? "" + startTime.toISOString() : "") + "&";
-        if (endTime === null)
-            throw new globalThis.Error("The parameter 'endTime' cannot be null.");
-        else if (endTime !== undefined)
-            url_ += "EndTime=" + encodeURIComponent(endTime ? "" + endTime.toISOString() : "") + "&";
+        if (gameMode === null)
+            throw new globalThis.Error("The parameter 'gameMode' cannot be null.");
+        else if (gameMode !== undefined)
+            url_ += "gameMode=" + encodeURIComponent("" + gameMode) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
@@ -1753,21 +1202,136 @@ export class ChessClient implements IChessClient {
     }
 
     /**
-     * @param body (optional) 
+     * @param gameId (optional) 
+     * @param moveUci (optional) 
      * @return OK
      */
-    chessPOST(body: GameStateDto | undefined, signal?: AbortSignal): Promise<GameStateDto> {
-        let url_ = this.baseUrl + "/api/app/chess";
+    updateGame(gameId: string | undefined, moveUci: string | undefined, signal?: AbortSignal): Promise<GameStateDto> {
+        let url_ = this.baseUrl + "/api/Chess/UpdateGame?";
+        if (gameId === null)
+            throw new globalThis.Error("The parameter 'gameId' cannot be null.");
+        else if (gameId !== undefined)
+            url_ += "GameId=" + encodeURIComponent("" + gameId) + "&";
+        if (moveUci === null)
+            throw new globalThis.Error("The parameter 'moveUci' cannot be null.");
+        else if (moveUci !== undefined)
+            url_ += "MoveUci=" + encodeURIComponent("" + moveUci) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(body);
-
         let options_: AxiosRequestConfig = {
-            data: content_,
             method: "POST",
             url: url_,
             headers: {
-                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            signal
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processUpdateGame(_response);
+        });
+    }
+
+    protected processUpdateGame(response: AxiosResponse): Promise<GameStateDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = GameStateDto.fromJS(resultData200);
+            return Promise.resolve<GameStateDto>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<GameStateDto>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    resignGame(id: string, signal?: AbortSignal): Promise<GameStateDto> {
+        let url_ = this.baseUrl + "/api/Chess/ResignGame/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            signal
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processResignGame(_response);
+        });
+    }
+
+    protected processResignGame(response: AxiosResponse): Promise<GameStateDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = GameStateDto.fromJS(resultData200);
+            return Promise.resolve<GameStateDto>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<GameStateDto>(null as any);
+    }
+
+    /**
+     * @param gameMode (optional) 
+     * @return OK
+     */
+    chessPOST(gameMode: GameMode | undefined, signal?: AbortSignal): Promise<GameStateDto> {
+        let url_ = this.baseUrl + "/api/app/chess?";
+        if (gameMode === null)
+            throw new globalThis.Error("The parameter 'gameMode' cannot be null.");
+        else if (gameMode !== undefined)
+            url_ += "gameMode=" + encodeURIComponent("" + gameMode) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
                 "Accept": "application/json"
             },
             signal
@@ -1959,19 +1523,22 @@ export class ChessClient implements IChessClient {
     }
 
     /**
+     * @param body (optional) 
      * @return OK
      */
-    chessDELETE(id: string, signal?: AbortSignal): Promise<void> {
-        let url_ = this.baseUrl + "/api/app/chess/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    chessPUT(body: MakeMoveDto | undefined, signal?: AbortSignal): Promise<GameStateDto> {
+        let url_ = this.baseUrl + "/api/app/chess";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(body);
+
         let options_: AxiosRequestConfig = {
-            method: "DELETE",
+            data: content_,
+            method: "PUT",
             url: url_,
             headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             signal
         };
@@ -1983,11 +1550,11 @@ export class ChessClient implements IChessClient {
                 throw _error;
             }
         }).then((_response: AxiosResponse) => {
-            return this.processChessDELETE(_response);
+            return this.processChessPUT(_response);
         });
     }
 
-    protected processChessDELETE(response: AxiosResponse): Promise<void> {
+    protected processChessPUT(response: AxiosResponse): Promise<GameStateDto> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -1999,11 +1566,10 @@ export class ChessClient implements IChessClient {
         }
         if (status === 200) {
             const _responseText = response.data;
-            return Promise.resolve<void>(null as any);
-
-        } else if (status === 204) {
-            const _responseText = response.data;
-            return Promise.resolve<void>(null as any);
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = GameStateDto.fromJS(resultData200);
+            return Promise.resolve<GameStateDto>(result200);
 
         } else if (status === 400) {
             const _responseText = response.data;
@@ -2051,7 +1617,7 @@ export class ChessClient implements IChessClient {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<GameStateDto>(null as any);
     }
 
     /**
@@ -2151,24 +1717,115 @@ export class ChessClient implements IChessClient {
     }
 
     /**
-     * @param body (optional) 
      * @return OK
      */
-    chessPUT(id: string, body: GameStateDto | undefined, signal?: AbortSignal): Promise<GameStateDto> {
+    chessDELETE(id: string, signal?: AbortSignal): Promise<void> {
         let url_ = this.baseUrl + "/api/app/chess/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(body);
-
         let options_: AxiosRequestConfig = {
-            data: content_,
-            method: "PUT",
+            method: "DELETE",
             url: url_,
             headers: {
-                "Content-Type": "application/json",
+            },
+            signal
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processChessDELETE(_response);
+        });
+    }
+
+    protected processChessDELETE(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Internal Server Error", status, _responseText, _headers, result500);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Not Implemented", status, _responseText, _headers, result501);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    resign(id: string, signal?: AbortSignal): Promise<GameStateDto> {
+        let url_ = this.baseUrl + "/api/app/chess/{id}/resign";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
                 "Accept": "application/json"
             },
             signal
@@ -2181,11 +1838,11 @@ export class ChessClient implements IChessClient {
                 throw _error;
             }
         }).then((_response: AxiosResponse) => {
-            return this.processChessPUT(_response);
+            return this.processResign(_response);
         });
     }
 
-    protected processChessPUT(response: AxiosResponse): Promise<GameStateDto> {
+    protected processResign(response: AxiosResponse): Promise<GameStateDto> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -8155,35 +7812,26 @@ export class UserLookupClient implements IUserLookupClient {
     }
 }
 
-export enum BookType {
-    Undefined = "Undefined",
-    Adventure = "Adventure",
-    Biography = "Biography",
-    Dystopia = "Dystopia",
-    Fantastic = "Fantastic",
-    Horror = "Horror",
-    Science = "Science",
-    ScienceFiction = "ScienceFiction",
-    Poetry = "Poetry",
+export enum GameMode {
+    Practice = "Practice",
+    VsComputer = "VsComputer",
 }
 
-export enum Color {
-    White = "White",
-    Black = "Black",
-}
-
-export class BookDto implements IBookDto {
-    id?: string;
-    creationTime?: Date;
-    creatorId?: string | undefined;
+export class GameMove implements IGameMove {
+    readonly id?: number;
+    readonly creationTime?: Date;
+    readonly creatorId?: string | undefined;
     lastModificationTime?: Date | undefined;
     lastModifierId?: string | undefined;
-    name?: string | undefined;
-    type?: BookType;
-    publishDate?: Date;
-    price?: number;
+    gameStateId?: string;
+    moveNumber?: number;
+    player?: Player;
+    moveUci?: string | undefined;
+    moveSan?: string | undefined;
+    fenBefore?: string | undefined;
+    fenAfter?: string | undefined;
 
-    constructor(data?: IBookDto) {
+    constructor(data?: IGameMove) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -8194,21 +7842,24 @@ export class BookDto implements IBookDto {
 
     init(_data?: any) {
         if (_data) {
-            this.id = _data["id"];
-            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : undefined as any;
-            this.creatorId = _data["creatorId"];
+            (this as any).id = _data["id"];
+            (this as any).creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : undefined as any;
+            (this as any).creatorId = _data["creatorId"];
             this.lastModificationTime = _data["lastModificationTime"] ? new Date(_data["lastModificationTime"].toString()) : undefined as any;
             this.lastModifierId = _data["lastModifierId"];
-            this.name = _data["name"];
-            this.type = _data["type"];
-            this.publishDate = _data["publishDate"] ? new Date(_data["publishDate"].toString()) : undefined as any;
-            this.price = _data["price"];
+            this.gameStateId = _data["gameStateId"];
+            this.moveNumber = _data["moveNumber"];
+            this.player = _data["player"];
+            this.moveUci = _data["moveUci"];
+            this.moveSan = _data["moveSan"];
+            this.fenBefore = _data["fenBefore"];
+            this.fenAfter = _data["fenAfter"];
         }
     }
 
-    static fromJS(data: any): BookDto {
+    static fromJS(data: any): GameMove {
         data = typeof data === 'object' ? data : {};
-        let result = new BookDto();
+        let result = new GameMove();
         result.init(data);
         return result;
     }
@@ -8220,94 +7871,56 @@ export class BookDto implements IBookDto {
         data["creatorId"] = this.creatorId;
         data["lastModificationTime"] = this.lastModificationTime ? this.lastModificationTime.toISOString() : undefined as any;
         data["lastModifierId"] = this.lastModifierId;
-        data["name"] = this.name;
-        data["type"] = this.type;
-        data["publishDate"] = this.publishDate ? this.publishDate.toISOString() : undefined as any;
-        data["price"] = this.price;
+        data["gameStateId"] = this.gameStateId;
+        data["moveNumber"] = this.moveNumber;
+        data["player"] = this.player;
+        data["moveUci"] = this.moveUci;
+        data["moveSan"] = this.moveSan;
+        data["fenBefore"] = this.fenBefore;
+        data["fenAfter"] = this.fenAfter;
         return data;
     }
 
-    clone(): BookDto {
+    clone(): GameMove {
         const json = this.toJSON();
-        let result = new BookDto();
+        let result = new GameMove();
         result.init(json);
         return result;
     }
 }
 
-export interface IBookDto {
-    id?: string;
+export interface IGameMove {
+    id?: number;
     creationTime?: Date;
     creatorId?: string | undefined;
     lastModificationTime?: Date | undefined;
     lastModifierId?: string | undefined;
-    name?: string | undefined;
-    type?: BookType;
-    publishDate?: Date;
-    price?: number;
+    gameStateId?: string;
+    moveNumber?: number;
+    player?: Player;
+    moveUci?: string | undefined;
+    moveSan?: string | undefined;
+    fenBefore?: string | undefined;
+    fenAfter?: string | undefined;
 }
 
-export class CreateUpdateBookDto implements ICreateUpdateBookDto {
-    name!: string;
-    type!: BookType;
-    publishDate!: Date;
-    price!: number;
-
-    constructor(data?: ICreateUpdateBookDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.name = _data["name"];
-            this.type = _data["type"];
-            this.publishDate = _data["publishDate"] ? new Date(_data["publishDate"].toString()) : undefined as any;
-            this.price = _data["price"];
-        }
-    }
-
-    static fromJS(data: any): CreateUpdateBookDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new CreateUpdateBookDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["name"] = this.name;
-        data["type"] = this.type;
-        data["publishDate"] = this.publishDate ? formatDate(this.publishDate) : undefined as any;
-        data["price"] = this.price;
-        return data;
-    }
-
-    clone(): CreateUpdateBookDto {
-        const json = this.toJSON();
-        let result = new CreateUpdateBookDto();
-        result.init(json);
-        return result;
-    }
-}
-
-export interface ICreateUpdateBookDto {
-    name: string;
-    type: BookType;
-    publishDate: Date;
-    price: number;
+export enum GameStatus {
+    InProgress = "InProgress",
+    Checkmate = "Checkmate",
+    Check = "Check",
+    Stalemate = "Stalemate",
+    Draw = "Draw",
+    Resignation = "Resignation",
+    Timeout = "Timeout",
 }
 
 export class GameStateDto implements IGameStateDto {
     id?: string;
-    winner?: Color;
-    moveHistory?: string[] | undefined;
-    startTime?: Date;
-    endTime?: Date;
+    currentFen?: string | undefined;
+    status?: GameStatus;
+    winner?: Player;
+    endTime?: Date | undefined;
+    moves?: GameMove[] | undefined;
 
     constructor(data?: IGameStateDto) {
         if (data) {
@@ -8321,14 +7934,15 @@ export class GameStateDto implements IGameStateDto {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.currentFen = _data["currentFen"];
+            this.status = _data["status"];
             this.winner = _data["winner"];
-            if (Array.isArray(_data["moveHistory"])) {
-                this.moveHistory = [] as any;
-                for (let item of _data["moveHistory"])
-                    this.moveHistory!.push(item);
-            }
-            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : undefined as any;
             this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : undefined as any;
+            if (Array.isArray(_data["moves"])) {
+                this.moves = [] as any;
+                for (let item of _data["moves"])
+                    this.moves!.push(GameMove.fromJS(item));
+            }
         }
     }
 
@@ -8342,14 +7956,15 @@ export class GameStateDto implements IGameStateDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["currentFen"] = this.currentFen;
+        data["status"] = this.status;
         data["winner"] = this.winner;
-        if (Array.isArray(this.moveHistory)) {
-            data["moveHistory"] = [];
-            for (let item of this.moveHistory)
-                data["moveHistory"].push(item);
-        }
-        data["startTime"] = this.startTime ? this.startTime.toISOString() : undefined as any;
         data["endTime"] = this.endTime ? this.endTime.toISOString() : undefined as any;
+        if (Array.isArray(this.moves)) {
+            data["moves"] = [];
+            for (let item of this.moves)
+                data["moves"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 
@@ -8363,10 +7978,64 @@ export class GameStateDto implements IGameStateDto {
 
 export interface IGameStateDto {
     id?: string;
-    winner?: Color;
-    moveHistory?: string[] | undefined;
-    startTime?: Date;
-    endTime?: Date;
+    currentFen?: string | undefined;
+    status?: GameStatus;
+    winner?: Player;
+    endTime?: Date | undefined;
+    moves?: GameMove[] | undefined;
+}
+
+export class MakeMoveDto implements IMakeMoveDto {
+    gameId?: string;
+    moveUci?: string | undefined;
+
+    constructor(data?: IMakeMoveDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.gameId = _data["gameId"];
+            this.moveUci = _data["moveUci"];
+        }
+    }
+
+    static fromJS(data: any): MakeMoveDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MakeMoveDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["gameId"] = this.gameId;
+        data["moveUci"] = this.moveUci;
+        return data;
+    }
+
+    clone(): MakeMoveDto {
+        const json = this.toJSON();
+        let result = new MakeMoveDto();
+        result.init(json);
+        return result;
+    }
+}
+
+export interface IMakeMoveDto {
+    gameId?: string;
+    moveUci?: string | undefined;
+}
+
+export enum Player {
+    White = "White",
+    Black = "Black",
+    None = "None",
 }
 
 export class ChangePasswordInput implements IChangePasswordInput {
@@ -9012,61 +8681,6 @@ export class ListResultDto_1OfOfUserDataAndAbstractionsAnd_0AndCulture_neutralAn
 
 export interface IListResultDto_1OfOfUserDataAndAbstractionsAnd_0AndCulture_neutralAndPublicKeyToken_null {
     items?: UserData[] | undefined;
-}
-
-export class PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null implements IPagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null {
-    items?: BookDto[] | undefined;
-    totalCount?: number;
-
-    constructor(data?: IPagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["items"])) {
-                this.items = [] as any;
-                for (let item of _data["items"])
-                    this.items!.push(BookDto.fromJS(item));
-            }
-            this.totalCount = _data["totalCount"];
-        }
-    }
-
-    static fromJS(data: any): PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null {
-        data = typeof data === 'object' ? data : {};
-        let result = new PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.items)) {
-            data["items"] = [];
-            for (let item of this.items)
-                data["items"].push(item ? item.toJSON() : undefined as any);
-        }
-        data["totalCount"] = this.totalCount;
-        return data;
-    }
-
-    clone(): PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null {
-        const json = this.toJSON();
-        let result = new PagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null();
-        result.init(json);
-        return result;
-    }
-}
-
-export interface IPagedResultDto_1OfOfBookDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null {
-    items?: BookDto[] | undefined;
-    totalCount?: number;
 }
 
 export class PagedResultDto_1OfOfGameStateDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null implements IPagedResultDto_1OfOfGameStateDtoAndAPIAnd_0AndCulture_neutralAndPublicKeyToken_null {
@@ -15399,12 +15013,6 @@ export class IValueValidator implements IIValueValidator {
 export interface IIValueValidator {
     name?: string | undefined;
     properties?: { [key: string]: any; } | undefined;
-}
-
-function formatDate(d: Date) {
-    return d.getFullYear() + '-' + 
-        (d.getMonth() < 9 ? ('0' + (d.getMonth()+1)) : (d.getMonth()+1)) + '-' +
-        (d.getDate() < 10 ? ('0' + d.getDate()) : d.getDate());
 }
 
 export class ChessApiException extends Error {
